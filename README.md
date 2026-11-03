@@ -1,140 +1,95 @@
 <div align="center">
-
-<img src="docs/media/logo.png" alt="Teolohiya.site" width="120" />
-
-# Teolohiya.site
-
-**A moderated book listing board for Christian theological books in the Philippines.**
-Serverless, built entirely on AWS with Amplify Gen 2.
-
-[**Live site → teolohiya.site**](https://teolohiya.site)
-
-![Next.js](https://img.shields.io/badge/Next.js-App_Router-000000?logo=nextdotjs)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
-![Tailwind](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)
+Teolohiya.site
+Discover and share Christian theological books across the Philippines.
+A live, moderated book-listing platform built with Next.js, TypeScript, and AWS Amplify Gen 2.
+Explore the live site · See the architecture · How moderation works
+![Next.js](https://img.shields.io/badge/Next.js-App_Router-111111?logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)
 ![AWS Amplify](https://img.shields.io/badge/AWS_Amplify-Gen_2-FF9900?logo=awsamplify&logoColor=white)
-![Region](https://img.shields.io/badge/region-ap--southeast--1-232F3E?logo=amazonaws)
-
-<img src="docs/media/demo.gif" alt="Teolohiya.site demo" width="800" />
-
-<sub>Full walkthrough video: <a href="PASTE_VIDEO_LINK_HERE">watch here</a></sub>
-
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Live-285943)
+<img src="docs/media/teolohiya-demo.gif" alt="Animated walkthrough of the real Teolohiya.site homepage and recently listed books" width="850" />
+<sub>Real screenshots of the live application · <a href="https://teolohiya.site">teolohiya.site</a></sub>
 </div>
-
-> **Note:** The application source lives in a private repository. This repo documents the architecture, AWS services and engineering decisions behind the live site.
-
----
-
-## What it is
-
-Teolohiya.site is a listing and discovery board, not a store. Members post Christian books they want to sell or trade; visitors browse without signing in and contact sellers directly. There are no payments, checkout, escrow or shipping.
-
-Every listing is **manually reviewed** by an admin or trusted moderator before it becomes public, to keep out spam, fake listings and inappropriate photos.
-
-## Features
-
-| Visitors | Members | Moderators | Admin |
-|---|---|---|---|
-| Browse and filter approved books | Register and sign in (Cognito) | Review pending queue with photos | Everything moderators can do |
-| Photo gallery per listing | Post listings with up to 5 photos | Approve or reject with a reason | Promote and revoke moderators |
-| Seller profile pages | See status and rejection reasons | Handle reports | Search users, view audit log |
-| Report a listing | Edit, withdraw, resubmit | Remove listings | Approve own listings (logged) |
-
-## Architecture
-
+> **Portfolio case study:** The production source code is maintained in a private repository. This repository documents the product, system design, and engineering decisions.
+Why I built it
+Christian books in the Philippines are often scattered across marketplaces, social groups, and individual sellers. Teolohiya.site brings listings into one searchable place so readers can discover books and contact sellers directly.
+This project began as hands-on practice while studying for cloud certifications and grew into a deployed, production-oriented AWS application. It is a discovery platform, not a checkout service: payments, delivery, and seller arrangements happen outside the site.
+What it does
+Experience	Capabilities
+Visitors	Browse approved books, search and filter listings, view book photos, visit seller profiles, and report listings
+Members	Sign up with Cognito; create and manage listings; upload up to five photos; track review status and resubmit rejected listings
+Moderators	Review pending listings and photos, approve or reject with reasons, handle reports, and remove listings
+Admins	Manage moderator permissions, search users, inspect audit logs, and perform logged administrative reviews
+Product preview
+<table>
+<tr>
+<td width="50%"><img src="docs/media/homepage.png" alt="Teolohiya.site homepage with search and listing actions" /></td>
+<td width="50%"><img src="docs/media/recent-listings.png" alt="Teolohiya.site book categories and recently listed book cards" /></td>
+</tr>
+<tr>
+<td align="center"><sub>Homepage and search</sub></td>
+<td align="center"><sub>Categories and recent listings</sub></td>
+</tr>
+</table>
+Architecture
 ```mermaid
-flowchart LR
-  U[Browser] --> CF[CloudFront CDN]
-  CF --> H[Amplify Hosting<br/>Next.js App Router]
-  U -->|sign in| COG[Cognito<br/>User pool + Identity pool]
-  U -->|GraphQL| APPSYNC[AppSync API]
-  APPSYNC --> DDB[(DynamoDB)]
-  APPSYNC -->|custom operations| LMB[Lambda<br/>moderation]
-  LMB --> DDB
-  LMB --> COGADM[Cognito admin API<br/>groups]
-  LMB -->|copy pending to approved| S3[(S3 bucket)]
-  U -->|upload / view photos| S3
-  COG -.->|group claims + IAM roles| APPSYNC
-  COG -.->|scoped credentials| S3
+flowchart TB
+    USER[Reader / Seller / Moderator] --> HOST[AWS Amplify Hosting<br/>Next.js App Router + CloudFront]
+    USER --> AUTH[Amazon Cognito<br/>Authentication + roles]
+    USER --> API[AWS AppSync<br/>GraphQL API]
+    API --> PRIVATE[(DynamoDB<br/>Private listings + reports + audit)]
+    API --> PUBLIC[(DynamoDB<br/>Approved public listings)]
+    API --> FN[AWS Lambda<br/>Moderation + admin actions]
+    FN --> PRIVATE
+    FN --> PUBLIC
+    FN --> AUTH
+    USER --> S3[Amazon S3<br/>Pending + approved photos]
+    FN --> S3
 ```
-
-## AWS services used
-
-| Service | What it does here |
-|---|---|
-| **AWS Amplify Hosting** | CI/CD from GitHub, SSR hosting for Next.js, custom domain and managed TLS |
-| **Amazon CloudFront** | Global CDN in front of the site (managed by Amplify) |
-| **AWS Certificate Manager** | HTTPS certificate for teolohiya.site |
-| **Amazon Cognito** | User pool (email sign-in), identity pool, `admin` and `moderator` groups, per-group IAM roles |
-| **AWS AppSync** | GraphQL API with owner, group and guest authorization rules, field-level auth |
-| **Amazon DynamoDB** | Private `Listing` table, public `PublicListing` table, audit log, reports |
-| **Amazon S3** | Private `pending/` prefix, public-read `approved/` prefix, scoped per-identity access |
-| **AWS Lambda** | Moderation engine: approve, reject, remove, promote, revoke, search users |
-| **AWS CloudFormation / CDK** | Amplify Gen 2 defines the whole backend in TypeScript and deploys it as stacks |
-| **IAM + IAM Identity Center** | Least-privilege deploy role, SSO instead of long-lived access keys |
-| **AWS Budgets** | Spend guardrails on a credit-limited account |
-
-Everything runs in **ap-southeast-1 (Singapore)**.
-
-## Listing lifecycle
-
+Core stack: Next.js App Router · TypeScript · Tailwind CSS · AWS Amplify Gen 2 · Cognito · AppSync · DynamoDB · Lambda · S3 · CloudFront · CDK/CloudFormation
+Deployment: AWS Singapore (`ap-southeast-1`), custom domain with managed HTTPS, GitHub-connected Amplify deployment, and AWS Budgets alerts.
+Moderation & security
+Listings are private until approved. The browser cannot directly approve a listing or write protected moderation fields.
 ```mermaid
 stateDiagram-v2
-  [*] --> PENDING: member submits
-  PENDING --> APPROVED: moderator or admin approves
-  PENDING --> REJECTED: rejected with reason
-  REJECTED --> PENDING: seller edits and resubmits
-  APPROVED --> PENDING: important edit
-  APPROVED --> SOLD: seller marks sold
-  APPROVED --> REMOVED: staff remove
-  PENDING --> WITHDRAWN: seller withdraws
+    [*] --> Pending: Submit listing
+    Pending --> Approved: Staff approves
+    Pending --> Rejected: Staff rejects with reason
+    Rejected --> Pending: Edit and resubmit
+    Approved --> Pending: Significant edit
+    Approved --> Removed: Staff removes
+    Approved --> Sold: Seller marks sold
+    Pending --> Withdrawn: Seller withdraws
 ```
-
-## Security design
-
-The key idea: **the browser is never trusted to change a listing's status.**
-
-- **Two-table split.** Pending and rejected content lives only in a private table. Approval copies a sanitized record into a separate public table that guests can read. Pending data is never reachable through public queries.
-- **Server-only writes.** Status, reviewer and timestamps are written by Lambda. Clients have read-only access to those fields.
-- **Live role checks.** The Lambda re-checks the caller's current Cognito group on every action, not just the token claim.
-- **No self-approval.** Moderators cannot approve their own listings. Admin exceptions are allowed and logged.
-- **Optimistic locking.** Reviews carry the version the reviewer saw, so a listing edited mid-review can't be approved by mistake.
-- **S3 prefix isolation.** `pending/{identity}/*` is private to the uploader and staff. Only `approved/*` is public. Each Cognito group has its own IAM role with explicit storage rules.
-- **Upload limits.** Max 5 photos, 5 MB each, image types only, photo paths validated server-side.
-- **Rate limits.** Caps on pending listings per user and submissions per day.
-- **Audit trail.** Every moderation action is written to a log table only the server can write.
-- **Safe role changes.** Promotion and revocation go through Lambda; revoking triggers a global sign-out so old tokens stop working.
-
-## Engineering practices
-
-- Strict TypeScript, ESLint and production build must pass before any release
-- Feature branches tested on a personal Amplify **sandbox** before touching production
-- Guarded release script: allowed-file checks, type check, lint, build, and a typed confirmation phrase before pushing
-- Safe schema changes using expand, migrate, switch, tighten, with a dry-run migration for existing data
-- Rollback by reverting the merge commit (never by redeploying an older backend build, which could drop new tables)
-- Accessibility: skip link, visible focus rings, reduced-motion support
-- SEO: metadata, Open Graph, sitemap, robots, web manifest
-
-## Lessons learned
-
-1. **Cognito groups need IAM, too.** Each group gets its own role; S3 rules for the default authenticated role don't cover admins.
-2. **Don't let the client own state transitions.** Moving approval into Lambda removed a whole class of API-tampering risks.
-3. **Name collisions bite.** A custom `deleteListing` clashed with the auto-generated model mutation.
-4. **Never roll back a data-model change by redeploying an old build.**
-5. **CI should use `npm install` when lock files drift across machines.**
-
-## Cost
-
-Designed for near-zero idle cost: Lambda, DynamoDB on-demand, S3 and AppSync are all pay-per-use. Only the custom domain is a fixed cost. No WAF-style add-ons, no always-on servers.
-
-## Roadmap
-
-- Mark as sold, view and contact-click counts
-- Branded verification emails via Amazon SES
-- Server-rendered listing pages and book URLs in the sitemap
-- Optional automated image screening (Amazon Rekognition) behind the manual review
-
-## Author
-
-**Jervil Angelo De Leon**
-[LinkedIn](https://www.linkedin.com/in/jervilangelo/) · [deleonangelojervil@gmail.com](mailto:deleonangelojervil@gmail.com)
+Separate private and public data: only sanitized, approved listings are copied into the guest-readable table.
+Server-controlled moderation: Lambda handles approval, rejection, removal, role changes, and audit entries.
+Role enforcement: Cognito groups, IAM roles, and live authorization checks protect administrative actions.
+No moderator self-approval: admin exceptions are explicitly logged.
+Concurrency protection: optimistic locking prevents approval of stale listing revisions.
+Photo isolation: private `pending/{identity}/*` uploads and publicly readable `approved/*` images, with scoped permissions and server-side path validation.
+Abuse controls: image type and size checks, listing submission limits, and staff-accessible reporting.
+Engineering decisions
+Challenge	Approach
+Prevent unreviewed listings from appearing publicly	Separate `Listing` and `PublicListing` models with Lambda-controlled publication
+Prevent client-side approval or role escalation	Protected fields, server-side group checks, and scoped IAM permissions
+Avoid approving outdated content	Version-aware moderation using optimistic locking
+Ship changes without losing production data	Amplify sandbox testing, guarded releases, and staged schema migrations
+Keep operating costs proportional to usage	Serverless, usage-based services; no always-on compute or NAT gateway
+Release discipline: strict TypeScript, ESLint, production builds, sandbox testing, explicit deployment confirmation, and rollback planning that accounts for database schema changes.
+Lessons learned
+Authorization spans services. Cognito group membership alone is not enough; IAM and S3 permissions must match each role.
+Moderation is a backend concern. Protected state transitions belong on the server, not in browser-controlled requests.
+Schema changes need deliberate rollouts. Reverting an older backend build can be unsafe when newer data models already exist.
+Small production safeguards matter. Audit logs, version checks, scoped uploads, and release gates make a real difference.
+Next steps
+Listing view and contact-click metrics
+Branded verification emails with Amazon SES
+Improved indexing and server-rendered book detail pages
+Optional image screening to assist, not replace, manual review
+About the project
+Built and maintained by Jervil Angelo De Leon as a practical cloud engineering project and a way to help Filipino Christians find and share theological books.
+Visit Teolohiya.site · LinkedIn · Email
+<div align="center">
+<sub>Built for readers. Designed with care. Soli Deo Gloria.</sub>
+</div>
