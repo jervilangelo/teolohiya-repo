@@ -32,12 +32,14 @@ This project began as hands-on practice while studying for cloud certifications 
 
 | Experience | Capabilities |
 | --- | --- |
-| **Visitors** | Browse approved books, search and filter listings, view book photos, visit seller profiles, and report listings |
+| **Visitors** | Browse approved books, search and filter listings, view book photos, view seller details, and report listings |
 | **Members** | Sign up with Cognito; create and manage listings; upload up to five photos; track review status and resubmit rejected listings |
 | **Moderators** | Review pending listings and photos, approve or reject with reasons, handle reports, and remove listings |
-| **Admins** | Manage moderator permissions, search users, inspect audit logs, and perform logged administrative reviews |
+| **Admins** | Find registered users, manage moderator permissions, review reports, inspect audit logs, and perform logged administrative reviews |
 
 ### Product preview
+
+Real screenshots from the live application (browser chrome cropped in future updates if desired). The admin screenshot has its account email redacted.
 
 <table>
 <tr>
@@ -49,6 +51,23 @@ This project began as hands-on practice while studying for cloud certifications 
 <td align="center"><sub>Categories and recent listings</sub></td>
 </tr>
 </table>
+
+### More of the application
+
+<table>
+<tr>
+<td width="50%"><img src="docs/media/book-details.png" alt="Book detail page with photos, price, condition and seller contact" /></td>
+<td width="50%"><img src="docs/media/list-a-book.png" alt="Create a book listing form with category, condition, location and contact fields" /></td>
+</tr>
+<tr><td align="center"><sub>Book details and direct seller contact</sub></td><td align="center"><sub>Create a listing</sub></td></tr>
+<tr>
+<td><img src="docs/media/admin-team.png" alt="Admin team management page with account search and role overview" /></td>
+<td><img src="docs/media/community-guidelines.png" alt="Community guidelines covering transactions, safety, copyright and theological standards" /></td>
+</tr>
+<tr><td align="center"><sub>Admin team and role management</sub></td><td align="center"><sub>Community guidelines and safety</sub></td></tr>
+</table>
+
+**End-to-end flow:** A member lists a book → staff reviews the submission → approved books become publicly discoverable → readers view photos and contact the seller directly. Transactions happen outside Teolohiya.site.
 
 ## Architecture
 
@@ -80,7 +99,7 @@ Teolohiya.site is deployed in **AWS Asia Pacific (Singapore), `ap-southeast-1`**
 | **AWS Amplify Hosting (Gen 2)** | Hosts the Next.js application, connects GitHub deployments, and manages the application backend infrastructure. |
 | **Amazon CloudFront** | Delivers the hosted website through a content delivery network managed by Amplify. |
 | **AWS Certificate Manager (ACM)** | Provides the TLS certificate for HTTPS on the custom domain. |
-| **Amazon Cognito** | Handles email sign-in, user identities, moderator/admin groups, and role-based access. |
+| **Amazon Cognito** | Handles registration and email sign-in, user identities, moderator/admin groups, and role-based access. |
 | **AWS AppSync** | Exposes the GraphQL API used by the frontend for listings and related operations. |
 | **Amazon DynamoDB** | Stores private listings, approved public listings, reports, and moderation audit records. |
 | **Amazon S3** | Stores uploaded book photos, separating pending images from approved images with scoped access. |
