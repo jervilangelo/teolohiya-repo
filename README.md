@@ -71,6 +71,35 @@ flowchart TB
 
 **Deployment:** AWS Singapore (`ap-southeast-1`), custom domain with managed HTTPS, GitHub-connected Amplify deployment, and AWS Budgets alerts.
 
+## AWS services used
+
+Teolohiya.site is deployed in **AWS Asia Pacific (Singapore), `ap-southeast-1`**, using a serverless architecture. These are the services and infrastructure tools documented in the project:
+
+| AWS service | Role in Teolohiya.site |
+| --- | --- |
+| **AWS Amplify Hosting (Gen 2)** | Hosts the Next.js application, connects GitHub deployments, and manages the application backend infrastructure. |
+| **Amazon CloudFront** | Delivers the hosted website through a content delivery network managed by Amplify. |
+| **AWS Certificate Manager (ACM)** | Provides the TLS certificate for HTTPS on the custom domain. |
+| **Amazon Cognito** | Handles email sign-in, user identities, moderator/admin groups, and role-based access. |
+| **AWS AppSync** | Exposes the GraphQL API used by the frontend for listings and related operations. |
+| **Amazon DynamoDB** | Stores private listings, approved public listings, reports, and moderation audit records. |
+| **Amazon S3** | Stores uploaded book photos, separating pending images from approved images with scoped access. |
+| **AWS Lambda** | Executes trusted moderation and administrative actions, including approval, rejection, and role management. |
+| **AWS CloudFormation / AWS CDK** | Defines and deploys Amplify Gen 2 backend resources as infrastructure as code. |
+| **AWS Identity and Access Management (IAM)** | Applies least-privilege permissions to application roles and deployment access. |
+| **AWS IAM Identity Center** | Supports SSO-based AWS access without relying on long-lived user access keys. |
+| **AWS Budgets** | Provides cost alerts and spending visibility for the AWS account. |
+
+### How the services work together
+
+1. **Amplify Hosting and CloudFront** serve the Next.js website over HTTPS using an **ACM** certificate.
+2. **Cognito** authenticates users and establishes permissions through groups and **IAM** roles.
+3. The frontend accesses listing data through **AppSync**, backed by **DynamoDB**.
+4. Sellers upload images to **S3** under restricted paths; **Lambda** handles approval and publishing workflows.
+5. **CDK / CloudFormation** manage infrastructure changes, while **IAM Identity Center** and **AWS Budgets** support secure operations and cost awareness.
+
+> **Architecture note:** AWS Amplify Gen 2 provisions and manages several of these services. They are listed separately to show their distinct roles in the deployed architecture, not to imply each was independently configured from scratch.
+
 ## Moderation & security
 
 **Listings are private until approved.** The browser cannot directly approve a listing or write protected moderation fields.
